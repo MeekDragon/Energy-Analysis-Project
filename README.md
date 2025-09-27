@@ -1,54 +1,86 @@
 # ⚡ Renewable Energy Optimization Pipeline
 
-A robust, scalable ETL pipeline built with **Apache Spark** and **Scala** to process real-time and historical renewable energy data. The goal of this project is to analyze hourly energy generation versus consumption to detect imbalances, providing a strong foundation for real-time grid monitoring and optimization.
+A robust, scalable ETL pipeline built with **Apache Spark** and **Scala** to process large volumes of renewable energy data. This project demonstrates end-to-end data engineering capability, from raw data ingestion to visualization, focused on grid management and anomaly detection.
 
 ## 🎯 Goal and Outcomes
 
-| Goal | Outcomes |
-| :--- | :--- |
-| **Analyze** the hourly generation vs consumption of energy. | **Variability** in energy generation analyzed and visualized. |
-| To **detect imbalance** in the energy supply/demand. | Identified **Peak vs. Off-Peak Demand** cycles. |
-| | Detected **Supply Imbalance**, allowing for proactive grid management. |
-| | [cite_start]Established a **Strong foundation for real-time monitoring**[cite: 5]. |
+| Goal | Outcomes | 
+| ----- | ----- | 
+| **Analyze** the hourly generation vs consumption of energy. | Identified **Variability in energy generation** and clear **Peak vs. Off-Peak Demand** cycles. | 
+| To **detect imbalance** in the energy supply/demand. | Detected **Supply Imbalance**, allowing for proactive grid management. | 
+| | Established a **Strong foundation for real-time monitoring** and future ML integration. | 
 
 ## 🛠️ Technology Stack
 
-| Category | Tool / Technology | Purpose in Project |
-| :--- | :--- | :--- |
-| **Data Processing** | **Apache Spark (Scala)** | [cite_start]Implemented the high-performance ETL pipeline[cite: 3]. |
-| **Data Storage** | **PostgreSQL** | [cite_start]Used to store the raw and hourly aggregated data for Business Intelligence (BI)[cite: 10]. |
-| **Visualization** | **Power BI** | [cite_start]Used for creating dashboards to visualize energy trends and anomalies[cite: 11]. |
-| **Programming** | **Scala** | [cite_start]Primary language for Spark ETL for better performance and type safety[cite: 3, 11]. |
+| Category | Tool / Technology | Purpose in Project | 
+| ----- | ----- | ----- | 
+| **Data Processing** | **Apache Spark (Scala)** | Implemented the high-performance ETL pipeline for transformations and aggregations. | 
+| **Data Storage** | **PostgreSQL** | Used to store the curated, hourly aggregated data for Business Intelligence (BI). | 
+| **Visualization** | **Power BI** | Used for creating dynamic dashboards to visualize energy trends and anomalies. | 
+| **Programming** | **Scala** | Primary language for Spark ETL, chosen for performance and type safety. | 
 
-## ⚙️ Architecture and Pipeline Flow
+## ⚙️ ETL Pipeline and Data Transformation
 
-The pipeline is designed to transform complex raw data into actionable insights:
+The pipeline transforms complex raw data (including energy metrics and cybersecurity indicators) into actionable hourly insights.
 
-1.  [cite_start]**Extract:** Reads raw energy metrics (generated, consumed) and cybersecurity indicators (traffic, anomaly score) from a defined source[cite: 8, 9].
-2.  **Transform (Spark/Scala):**
-    * [cite_start]Validates and parses timestamps, dropping rows with invalid data[cite: 12].
-    * **Aggregates** metrics (Sum, Average) to an hourly level.
-    * [cite_start]**Computes derived fields** like `net_balance_kwh` (generated - consumed) and an `anomaly_flag`[cite: 13].
-3.  [cite_start]**Load (JDBC):** Stores the curated hourly aggregated data into a **PostgreSQL** database table (`energy_cyber_hourly`)[cite: 10, 14].
+### Transformation Logic (Spark/Scala)
 
-## 📊 Key Data Schema (PostgreSQL)
+1. **Validation:** Validated and parsed raw `ts_utc` timestamps; dropped rows with inconsistent or invalid data.
 
-The curated data is stored in the `energy_cyber_hourly` table:
+2. **Aggregation:** Resampled and aggregated metrics to an hourly level (`hour_utc`):
 
-| Field | Description | Derivation |
-| :--- | :--- | :--- |
-| `hour_utc` | Hourly timestamp | Truncated from the raw timestamp |
-| `generated_kwh` | Sum of energy generated | Aggregation |
-| `consumed_kwh` | Sum of energy consumed | Aggregation |
-| **`net_balance_kwh`** | Net energy balance | [cite_start]`generated - consumed` [cite: 13] |
-| **`anomaly_flag`** | Flag for high anomaly scores | [cite_start]`anomaly score > 0.5` [cite: 13] |
+   * **Sum:** Energy generated, energy consumed, intrusion attempts.
 
-## 💡 Implementation Details
+   * **Average:** Carbon emissions, network traffic, anomaly score.
 
-[cite_start]The ETL pipeline was implemented using **Scala** within Apache Spark to leverage its performance benefits and strong type system[cite: 11]. The core logic is defined in `EnergyETL.scala`.
+3. **Derived Fields:** Computed critical new features:
 
-**Challenges Overcome:**
+   * **`net_balance_kwh`**: Calculated as `generated - consumed` to quantify supply balance.
 
-* Handling data quality issues (missing values, inconsistent timestamps)[cite: 1, 2].
-* [cite_start]Implementing complex time-series logic for timestamp alignment and hourly resampling[cite: 2].
-* [cite_start]Successfully integrating Spark with PostgreSQL using the JDBC driver[cite: 3].
+   * **`anomaly_flag`**: Boolean flag set when `anomaly` score > 0.5 for immediate operational alerting.
+
+### Database Schema (PostgreSQL)
+
+The curated data is loaded into the `energy_cyber_hourly` table:
+
+| Field | Description | Type | 
+| ----- | ----- | ----- | 
+| `hour_utc` | Hourly timestamp (Primary Key) | Timestamp | 
+| `generated_kwh` | Sum of energy generated | Numeric | 
+| `consumed_kwh` | Sum of energy consumed | Numeric | 
+| **`net_balance_kwh`** | Net energy balance (Derived) | Numeric | 
+| **`anomaly_flag`** | High-risk anomaly indicator (Derived) | Boolean | 
+
+## 📊 Analysis and Visualization (Power BI)
+
+* **BI Integration:** The PostgreSQL database was directly connected to **Power BI**.
+
+* **Dashboard Creation:** Created **dynamic dashboards** in Power BI to visually represent the hourly energy trends, consumption patterns, and imbalance events.
+
+* **Actionable Insights:** This visualization was crucial for demonstrating the project's outcomes, allowing stakeholders to easily track **Peak** vs. Off-Peak **Demand** cycles and identify system anomalies for proactive grid management.
+
+![Uploading image (1).png…]()
+
+
+
+## 💡 Challenges and Solutions
+
+| Challenge | Solution Implemented | 
+| ----- | ----- | 
+| **Data Quality Issues** | Used Spark transformations to handle missing or negative values, and standardized inconsistent timestamp formats. | 
+| **Timestamp Alignment** | Implemented precise resampling logic in Spark to aggregate all metrics accurately to the required hourly frequency. | 
+| **PostgreSQL Integration** | Successfully managed the **JDBC** driver setup **and configuration** within the Spark environment for robust data loading. | 
+
+## 🚀 Future Enhancements
+
+The architecture is scalable and designed for future expansion, including:
+
+* Real-time streaming using **Kafka + Spark Structured Streaming**.
+
+* Predictive analytics using **MLlib (Scala)** for forecasting demand and anomaly prediction.
+
+* Integration with IoT sensors for live energy data feeds.
+
+## 🔗 Repository Links
+
+* **GitHub Repository:**
